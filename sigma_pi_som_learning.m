@@ -18,7 +18,7 @@ MAX_INIT_RANGE = 0.1;
 % learning rate
 ETA = 0.01;
 % number of training epochs
-MAX_EPOCHS = 300000;
+MAX_EPOCHS = 190000;
 
 % the neighborhood kernel shrinks in time
 
@@ -63,40 +63,19 @@ val_x = zeros(MAX_EPOCHS, 1);
 val_x_bar = zeros(MAX_EPOCHS, 1);
 val_y_bar = zeros(MAX_EPOCHS, 1);
 
-% % % sort the input data 
-% for t = 1:MAX_EPOCHS
-%     % post-synaptic factor data
-%     % choose a random value from z sensory data
-%     val_z(t) = MIN_VAL_OUT + (MAX_VAL_OUT - MIN_VAL_OUT)*rand;
-%     % sample randomly and input pair (x, y) such that x+y=z
-%     val_x(t) = MIN_VAL_IN + (MAX_VAL_IN - MIN_VAL_IN)*rand;
-%     
-%     % pre-synaptic factor data
-%     % sample randomly a pair(x_bar, y_bar) such that x_bar+y_bar=z
-%     val_x_bar(t) = MIN_VAL_IN + (MAX_VAL_IN - MIN_VAL_IN)*rand;
-% end
-% 
-% % % sort the input data 
-% % val_z = sort(val_z);
-% % val_x = sort(val_x);
-% % val_x_bar = sort(val_x_bar);
-% val_y = val_z - val_x;
-% val_y_bar = val_z - val_x_bar;
+% preset systematic data as described in paper
+for it =1:MAX_EPOCHS
+    val_y(it) = MIN_VAL_IN + (MAX_VAL_IN - MIN_VAL_IN)*rand;
+end
+val_y = sort(val_y);
 
 %% NETWORK SIMULATION
 for t = 1:MAX_EPOCHS
     
-    % post-synaptic factor data
-    % sample randomly and input pair (x, y) such that x+y=z
-    val_x(t) = MIN_VAL_IN + (MAX_VAL_IN - MIN_VAL_IN)*rand;
-    val_y(t) = MIN_VAL_IN + (MAX_VAL_IN - MIN_VAL_IN)*rand;
-    % choose a random value from z sensory data
+    % we have systematically initialized data as described in paper such
+    % that randomly selected (val_x, val_y) satisfy val_x + val_y = val_z
+    val_x(t) = 2*MAX_VAL_IN/3 + (MAX_VAL_IN - 2*MAX_VAL_IN/3)*rand;
     val_z(t) = val_x(t) + val_y(t);
-    
-    % pre-synaptic factor data
-    % sample randomly a pair(x_bar, y_bar) such that x_bar+y_bar=z
-    val_x_bar(t) = MIN_VAL_IN + (MAX_VAL_IN - MIN_VAL_IN)*rand;
-    val_y_bar(t) = val_z(t) - val_x_bar(t);
     
     % produce the population code for (x, y) pair, post-synaptic
     population_x.A = population_encoder(val_x(t), MAX_VAL_IN, N_NEURONS);
@@ -106,7 +85,7 @@ for t = 1:MAX_EPOCHS
     for idx = 1:N_NEURONS % in z population
         for jdx = 1:N_NEURONS % in x population
             for kdx = 1:N_NEURONS % in y population
-               delta_act(jdx, kdx) = population_z.W(idx, jdx, kdx)*population_x.A(jdx)*population_y.A(kdx);
+                delta_act(jdx, kdx) = population_z.W(idx, jdx, kdx)*population_x.A(jdx)*population_y.A(kdx);
             end
         end
         population_z.A(idx) = sum(delta_act(:));
@@ -119,6 +98,11 @@ for t = 1:MAX_EPOCHS
     
     % compute activations in the output population z
     population_z.A = gauss_kernel(NORM_ACT, N_NEURONS, SIGMAT(t), bmu_pos);
+    
+    % we have systematically initialized data as described in paper such
+    % that randomly selected (val_x_bar, val_y_bar) satisfy val_x_bar + val_y_bar = val_z
+    val_x_bar(t) = MIN_VAL_IN + (val_z(t))*rand;
+    val_y_bar(t) = val_z(t) - val_x_bar(t);
     
     % produce the population code for (x_bar, y_bar) pair, pre-synaptic
     population_x_bar.A = population_encoder(val_x_bar(t), MAX_VAL_IN, N_NEURONS);
@@ -133,13 +117,9 @@ for t = 1:MAX_EPOCHS
             end
         end
     end
-
+    
 end % end of input dataset
 
-    % normalize the weights
-    population_z.W = population_z.W./max(population_z.W(:));
-    
-    
 %% VISUALIZATION
 figure; set(gcf, 'color', 'w');
 for idx = 1:N_NEURONS
