@@ -13,12 +13,12 @@ MAX_VAL_OUT = 2.0;
 % number of neurons in each population
 N_NEURONS = 15;
 % maximum initialization range of weights and activities in the populations
-MIN_INIT_RANGE = -0.1;
-MAX_INIT_RANGE = 0.1;
+MIN_INIT_RANGE = -0.5;
+MAX_INIT_RANGE = 0.5;
 % learning rate
-ETA = 0.01;
+ETA = 0.001;
 % number of training epochs
-MAX_EPOCHS = 190000;
+MAX_EPOCHS = 199999;
 
 % the neighborhood kernel shrinks in time
 
@@ -118,6 +118,10 @@ for t = 1:MAX_EPOCHS
         end
     end
     
+    if any(isnan(population_z.W(:)))
+                    uiwait(warndlg('Check your data'));
+    end
+                
 end % end of input dataset
 
 %% VISUALIZATION
