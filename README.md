@@ -1,0 +1,1 @@
+Algorithm for a network which learns coordinate systems transformations using sigma-pi units that self-organize (Weber et al.).
